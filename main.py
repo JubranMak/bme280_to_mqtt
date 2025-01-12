@@ -9,20 +9,11 @@ import argparse
 I2C_BUS = 1
 BME280_ADDRESS = 0x76  # Default I2C address for BME280
 
-
-parser = argparse.ArgumentParser(description="BME280 to MQTT script")
-parser.add_argument("--broker", required=True, help="MQTT broker address")
-parser.add_argument("--port", type=int, default=1883, help="MQTT broker port")
-parser.add_argument("--topic", required=True, help="MQTT topic")
-parser.add_argument("--client_id", default="bme280_sensor", help="MQTT client ID")
-args = parser.parse_args()
-
-
 # Assign arguments to variables
-MQTT_BROKER = args.broker
-MQTT_PORT = args.port
-MQTT_TOPIC = args.topic
-MQTT_CLIENT_ID = args.client_id
+MQTT_BROKER = '192.168.178.58'
+MQTT_PORT = 1883
+MQTT_TOPIC = 'homeassistant/sensor/bme280_temperature'
+MQTT_CLIENT_ID = 'bme280_sensor'
 
 print(f"Connecting to MQTT broker {MQTT_BROKER}:{MQTT_PORT} with client ID {MQTT_CLIENT_ID}")
 print(f"Publishing data to topic: {MQTT_TOPIC}")
