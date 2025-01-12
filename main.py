@@ -28,7 +28,7 @@ print(f"Connecting to MQTT broker {MQTT_BROKER}:{MQTT_PORT} with client ID {MQTT
 print(f"Publishing data to topic: {MQTT_TOPIC}")
 
 # Connect to MQTT broker
-client = mqtt.Client(MQTT_CLIENT_ID)
+client = mqtt.Client(MQTT_CLIENT_ID, protocol=mqtt.MQTTv311, callback_api_version=2)
 client.connect(MQTT_BROKER, MQTT_PORT, 60)
 
 # Initialize the BME280 sensor
