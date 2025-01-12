@@ -37,26 +37,67 @@ calibration_params = bme280.load_calibration_params(bus, BME280_ADDRESS)
 
 print("Collecting data. Press Ctrl+C to stop.")
 
-while True:
-    # Read sensor data
-    data = bme280.sample(bus, BME280_ADDRESS, calibration_params)
-    temperature = round(data.temperature, 2)
-    humidity = round(data.humidity, 2)
-    pressure = round(data.pressure, 2)
-        # Create a payload for MQTT
-    payload = {
+# Define the MQTT sensor configurations for Home Assistant discovery
+sensor_configs = {
+    "temperature": {
         "name": "BME280 Temperature",
-        "state_topic": "sensor/bme280",
-        "value_template": "1",
+        "state_topic": f"{MQTT_TOPIC}/state",
+        "value_template": "{{ value_json.temperature }}",
         "unit_of_measurement": "°C",
-        "qos": 1
-    }
+        "device_class": "temperature",
+        "unique_id": "bme280_temperature",
+        "qos": 1,
+    },
+    "humidity": {
+        "name": "BME280 Humidity",
+        "state_topic": f"{MQTT_TOPIC}/state",
+        "value_template": "{{ value_json.humidity }}",
+        "unit_of_measurement": "%",
+        "device_class": "humidity",
+        "unique_id": "bme280_humidity",
+        "qos": 1,
+    },
+    "pressure": {
+        "name": "BME280 Pressure",
+        "state_topic": f"{MQTT_TOPIC}/state",
+        "value_template": "{{ value_json.pressure }}",
+        "unit_of_measurement": "hPa",
+        "device_class": "pressure",
+        "unique_id": "bme280_pressure",
+        "qos": 1,
+    },
+}
 
+# Publish the sensor configurations for Home Assistant discovery
+for sensor, config in sensor_configs.items():
+    config_topic = f"{MQTT_TOPIC}_{sensor}/config"
+    client.publish(config_topic, json.dumps(config), qos=1, retain=True)
 
+# Keep the client loop running to handle connections and messages
+client.loop_start()
 
-        # Publish to MQTT topic
-    client.publish(MQTT_TOPIC, json.dumps(payload), qos=1)
-    print(f"Published: {payload}")
+try:
+    while True:
+        # Read sensor data
+        data = bme280.sample(bus, BME280_ADDRESS, calibration_params)
+        temperature = round(data.temperature, 2)
+        humidity = round(data.humidity, 2)
+        pressure = round(data.pressure, 2)
 
-        # Wait before sending the next data
-    time.sleep(1)
+        # Create a payload for MQTT with actual sensor values
+        payload = {
+            "temperature": temperature,
+            "humidity": humidity,
+            "pressure": pressure,
+        }
+
+        # Publish the sensor data to the topic
+        client.publish(f"{MQTT_TOPIC}/state", json.dumps(payload), qos=1, retain=False)
+
+        # Wait for a few seconds before reading data again
+        time.sleep(10)  # Adjust the interval as needed
+except KeyboardInterrupt:
+    print("Stopping...")
+finally:
+    client.loop_stop()
+    client.disconnect()
